@@ -1,0 +1,112 @@
+# generate repo
+[root@compute1 cookbooks]# chef generate repo my_chef
+
+# generate cookbook base
+[root@compute1 cookbooks]# chef generate cookbook base
+
+# add some recipes to install packages
+
+# cat ~/chef-repo/cookbooks/base/recipes/default.rb 
+#
+# Cookbook:: base
+# Recipe:: default
+#
+# Copyright:: 2017, The Authors, All Rights Reserved.
+
+# install all the required packages 
+
+['vim','screen','iftop'].each do |p|
+  package p do
+    action :install
+  end
+end
+
+
+# upload cookbook
+[root@compute1 cookbooks]# knife cookbook upload base
+Uploading base           [0.1.0]
+Uploaded 1 cookbook.
+
+
+
+# vim is someting added before  
+[root@compute1 cookbooks]# knife list 
+base  vim
+
+
+# nodes are added before; show node list 
+[root@compute1 cookbooks]# knife node list
+admin
+compute1
+noc
+
+# show node info 
+[root@compute1 cookbooks]# knife node show noc
+Node Name:   noc
+Environment: _default
+FQDN:        noc.internal.cluster
+IP:          172.16.0.3
+Run List:    recipe[vim], recipe[base]
+Roles:       
+Recipes:     vim, vim::default, base, base::default
+Platform:    ubuntu 16.04
+Tags:        
+[root@compute1 cookbooks]# knife node show compute1
+Node Name:   compute1
+Environment: _default
+FQDN:        compute1.internal.cluster
+IP:          172.16.0.4
+Run List:    recipe[vim]
+Roles:       
+Recipes:     vim, vim::default
+Platform:    centos 7.3.1611
+Tags:        
+
+
+# to add recipe to node runlist
+[root@compute1 cookbooks]# knife node run_list add compute1 recipe[base]
+compute1:
+  run_list:
+    recipe[vim]
+    recipe[base]
+[root@compute1 cookbooks]# knife node show compute1
+Node Name:   compute1
+Environment: _default
+FQDN:        compute1.internal.cluster
+IP:          172.16.0.4
+Run List:    recipe[vim], recipe[base]
+Roles:       
+Recipes:     vim, vim::default
+Platform:    centos 7.3.1611
+Tags:        
+
+# to trigger chef-client
+[root@compute1 cookbooks]# chef-client 
+Starting Chef Client, version 13.2.20
+resolving cookbooks for run list: ["vim", "base"]
+Synchronizing Cookbooks:
+  - vim (0.1.0)
+  - base (0.1.0)
+Installing Cookbook Gems:
+Compiling Cookbooks...
+Converging 4 resources
+Recipe: vim::default
+  * yum_package[vim] action install (up to date)
+Recipe: base::default
+  * yum_package[vim] action install (up to date)
+  * yum_package[screen] action install
+    - install version 4.1.0-0.23.20120314git3c2946.el7_2 of package screen
+  * yum_package[iftop] action install
+    - install version 1.0-0.14.pre4.el7 of package iftop
+
+Running handlers:
+Running handlers complete
+Chef Client finished, 2/4 resources updated in 10 seconds
+
+[root@compute1 my_chef]# knife cookbook list
+base   0.1.0
+vim    0.1.0
+
+
+
+
